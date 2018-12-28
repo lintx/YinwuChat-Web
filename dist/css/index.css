@@ -1,0 +1,65 @@
+body{
+    background: #444444;
+    word-break: break-all;
+}
+.navbar{
+}
+.yinwuchat-content{
+    padding-bottom: 40px;
+    color: #D6D6D6;
+}
+.yinwuchat-content-warp{
+    padding: 8px;
+}
+.yinwuchat-content p{
+    margin-bottom: 0;
+}
+.yinwuchat-message-time{
+    color: #888888;
+}
+.yinwuchat-chat{
+    height: 40px;
+}
+.yinwuchat-chat form{
+    width: 100%;
+    height: 100%;
+}
+.yinwuchat-chat input{
+    background: transparent;
+    border: 0;
+    outline: 0;
+    padding: 0 8px;
+    color: #D6D6D6;
+    width: 100%;
+    height: 100%;
+}
+
+.yinwuchat-content p .color-a { color: #50FF38; }
+.yinwuchat-content p .color-b { color: #5BFFFF; }
+.yinwuchat-content p .color-c { color: #EA3A3F; }
+.yinwuchat-content p .color-d { color: #EF1DFF; }
+.yinwuchat-content p .color-e { color: #FAFF34; }
+.yinwuchat-content p .color-f { color: #EDEDED; }
+.yinwuchat-content p .color-0 { color: #000000; }
+.yinwuchat-content p .color-1 { color: #19009C; }
+.yinwuchat-content p .color-2 { color: #30A000; }
+.yinwuchat-content p .color-3 { color: #379C9A; }
+.yinwuchat-content p .color-4 { color: #9A0000; }
+.yinwuchat-content p .color-5 { color: #99009C; }
+.yinwuchat-content p .color-6 { color: #EF9B00; }
+.yinwuchat-content p .color-7 { color: #9A9A9A; }
+.yinwuchat-content p .color-8 { color: #43443E; }
+.yinwuchat-content p .color-9 { color: #412BFF; }
+.yinwuchat-content p .yinwuchat-chat-style-l{font-weight: bold;}
+.yinwuchat-content p .yinwuchat-chat-style-m{text-decoration: line-through;}
+.yinwuchat-content p .yinwuchat-chat-style-n{text-decoration: underline;}
+.yinwuchat-content p .yinwuchat-chat-style-o{font-style: italic;}
+
+.yinwuchat-content p a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.yinwuchat-content p a:hover {
+    color: inherit;
+}

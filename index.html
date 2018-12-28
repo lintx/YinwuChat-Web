@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YinwuChat</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/dist/css/index.css">
+</head>
+<body ng-controller="yinwuchatCtrl">
+<div>
+    <div>
+        <div class="yinwuchat-content">
+            <div class="yinwuchat-content-warp">
+                <div class="yinwuchat-defaultinfo">
+                    <p>欢迎来到YinwuChat</p>
+                    <p>在这里你可以接收到游戏内玩家的消息，绑定token后可以在这里向游戏内发送消息</p>
+                    <p>YinwuChat-Web 0.0.1 Author:LinTx</p>
+                    <p>---</p>
+                </div>
+                <div class="yinwuchat-message">
+                    <p ng-repeat="msg in message" repeat-hack>
+                        <span class="yinwuchat-message-time">{{msg.time|int2date}} </span>
+                        <span ng-if="msg.type==='error'" class="text-danger"> [错误信息] </span>
+                        <span ng-if="msg.type==='info'" class="text-info"> [提示信息] </span>
+                        <span ng-bind-html="msg.message|unsafe" ng-class="{'text-danger':msg.type=='error','text-info':msg.type=='info'}"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="fixed-bottom bg-dark yinwuchat-chat">
+            <form ng-submit="onchat()">
+                <input ng-keyup="chatKeyUp($event)" ng-model="chat.message" placeholder="在这里输入文字然后按回车以发送消息到服务器" />
+                <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/node_modules/jquery/jquery.min.js"></script>
+<script src="/node_modules/moment/moment.js"></script>
+<script src="/node_modules/angular/angular.min.js"></script>
+<script src="/dist/js/index.js"></script>
+</body>
+</html>
