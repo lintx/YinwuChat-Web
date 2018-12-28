@@ -277,7 +277,7 @@
             $scope.historyMessageIndex = $scope.historyMessage.length;
             if (islogin) {
                 sendMessage($scope.chat.message);
-                onMessage(new Date().getTime(),"你",$scope.chat.message,false);
+                onMessage(new Date().getTime(),"你",$scope.chat.message,undefined,false);
             }
             else {
                 addMessage("你还没有连接到服务器，或者token校验失败，或者token尚未绑定，暂时无法发送消息",msg_type_err);
