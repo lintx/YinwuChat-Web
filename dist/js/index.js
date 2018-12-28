@@ -109,7 +109,12 @@
                                 checkToken(data.status,data.isbind,data.message);
                                 break;
                             case "send_message":
-                                onMessage(data.time,data.player,data.message);
+                                onMessage(data.time,data.player,data.message,data.server);
+                                break;
+                            case "player_join":
+                            case "player_leave":
+                            case "player_switch_server":
+                                onPlayerStatusMessage(data.time,data.player,data.server,data.action);
                                 break;
                         }
                     }
@@ -205,8 +210,11 @@
             }
         }
         
-        function onMessage(time,player,message,apply){
-            message = "§f" + player + " §7> §f" + message;
+        function onMessage(time,player,message,server,apply){
+            message = "§e" + player + " §7> §f" + message;
+            if (typeof server === "string") {
+                message = "§b[" + server + "] " + message;
+            }
 
             message = message.replace(/&([0-9abcdef])([^&]*)/ig, (regex, color, msg) => {
                 return "§" + color + msg;
@@ -235,6 +243,27 @@
             }
         }
 
+        function onPlayerStatusMessage(time,player,server,status){
+            var message = "§f玩家§e" + player + "§f";
+            switch (status) {
+                case "player_join":
+                    message += "加入了游戏，所在服务器：§b" + server;
+                    break;
+                case "player_leave":
+                    message += "退出了游戏";
+                    break;
+                case "player_switch_server":
+                    message += "加入了服务器：§b" + server;
+                    break;
+            }
+            message = message.replace(/§([0-9abcdef])([^§]*)/ig, (regex, color, msg) => {
+                msg = msg.replace(/ /g, '&nbsp;');
+                return `<span class="color-${color}">${msg}</span>`;
+            });
+            $scope.$apply(function () {
+                addMessage(message,msg_type_default,time);
+            });
+        }
 
 
         $scope.onchat = function(){
