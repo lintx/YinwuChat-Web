@@ -247,7 +247,10 @@
             var message = "§f玩家§e" + player + "§f";
             switch (status) {
                 case "player_join":
-                    message += "加入了游戏，所在服务器：§b" + server;
+                    message += "加入了游戏";
+                    if (message.length > 0) {
+                        message += "，所在服务器：§b" + server;
+                    }
                     break;
                 case "player_leave":
                     message += "退出了游戏";
