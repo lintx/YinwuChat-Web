@@ -182,7 +182,7 @@
 
         function addBindMsg(token) {
             $scope.$apply(function () {
-                addMessage("请进入游戏，并输入命令<span class='badge badge-light'>/yinwuchat bind " + token + " 备注</span>以绑定token，备注可以在使用<span class='badge badge-light'>/yinwuchat list</span>命令时查询到，当然，你也可以省略备注。",msg_type_info);
+                addMessage("请进入游戏，并<span class='badge badge-warning'>在游戏内输入命令</span><span class='badge badge-light'>/yinwuchat bind " + token + " 备注</span>以绑定token，备注可以在使用<span class='badge badge-light'>/yinwuchat list</span>命令时查询到，当然，你也可以省略备注。",msg_type_info);
             });
         }
         
@@ -210,7 +210,7 @@
             }
         }
         
-        function onMessage(time,player,message,server,apply){
+        function onMessage(time,player,message,server){
             message = "§e" + player + " §7> §f" + message;
             if (typeof server === "string") {
                 message = "§b[" + server + "] " + message;
@@ -233,14 +233,9 @@
                 return `<span class="color-${color}">${msg}</span>`;
             });
 
-            if (apply !== false) {
-                $scope.$apply(function () {
-                    addMessage(message,msg_type_default,time);
-                });
-            }
-            else {
+            $scope.$apply(function () {
                 addMessage(message,msg_type_default,time);
-            }
+            });
         }
 
         function onPlayerStatusMessage(time,player,server,status){
@@ -277,7 +272,6 @@
             $scope.historyMessageIndex = $scope.historyMessage.length;
             if (islogin) {
                 sendMessage($scope.chat.message);
-                onMessage(new Date().getTime(),"你",$scope.chat.message,undefined,false);
             }
             else {
                 addMessage("你还没有连接到服务器，或者token校验失败，或者token尚未绑定，暂时无法发送消息",msg_type_err);
