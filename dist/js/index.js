@@ -248,7 +248,7 @@
             switch (status) {
                 case "player_join":
                     message += "加入了游戏";
-                    if (message.length > 0) {
+                    if (server.length > 0) {
                         message += "，所在服务器：§b" + server;
                     }
                     break;
