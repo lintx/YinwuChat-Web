@@ -5,6 +5,7 @@ body{
 .navbar{
 }
 .yinwuchat-content{
+    padding-top: 65px;
     padding-bottom: 40px;
     color: #D6D6D6;
 }
@@ -62,4 +63,36 @@ body{
 
 .yinwuchat-content p a:hover {
     color: inherit;
+}
+
+.cursor-hand{
+    cursor: pointer;
+}
+
+.yinwuchat-player-list{
+    top: 65px;
+    left: 0;
+    right: 0;
+    bottom: 40px;
+}
+.yinwuchat-player-list>.row{
+    height: 100%;
+}
+.yinwuchat-player-list .left{
+    background: rgba(0,0,0,0.4);
+}
+.yinwuchat-player-list .right{
+    background: rgba(0,0,0,0.2);
+    color: white;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+.yinwuchat-player-list .right h6{
+    color: #cccccc;
+}
+.yinwuchat-player-list .right .server-info{
+    color: #5BFFFF;
+}
+.yinwuchat-player-list .right .player_name{
+    color: #FAFF34;
 }

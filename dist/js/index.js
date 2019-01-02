@@ -17,8 +17,8 @@
         $scope.historyMessageIndex = 0;
         var islogin = false;
 
-        var msg_type_err = 2,msg_type_info = 1,msg_type_default = 0;
-        function addMessage(message, type, time) {
+        var msg_type_err = 2,msg_type_info = 1,msg_type_default = 0,msg_type_server = 3;
+        function formatMessageHtmlObj(message, type, time) {
             var obj = {message:message};
             switch (type) {
                 case 2:
@@ -27,12 +27,21 @@
                 case 1:
                     obj.type = "info";
                     break;
+                case 3:
+                    obj.type = "server";
+                    break;
                 default:
                     obj.type = "message";
                     break;
             }
             obj.time = typeof time === "undefined" ? new Date().getTime() : time;
-            $scope.message.push(obj);
+            return obj;
+        }
+        function addMessage(message, type, time) {
+            $scope.message.push(formatMessageHtmlObj(message,type,time));
+        }
+        function insMessage(message, type, time) {
+            $scope.message.splice(0,0,formatMessageHtmlObj(message,type,time));
         }
         function notWebSocket() {
             addMessage("看起来你的浏览器不支持WebSocket，YinwuChat的运行依赖于WebSocket，你需要一个支持WebSocket的浏览器，比如Chrome，才能正常使用。",msg_type_err);
@@ -109,20 +118,49 @@
                                 checkToken(data.status,data.isbind,data.message);
                                 break;
                             case "send_message":
-                                onMessage(data.time,data.player,data.message,data.server);
+                                onMessage(data.time,data.player,data.message,data.server,data.message_id);
+                                break;
+                            case "private_message":
+                                onPrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
+                                break;
+                            case "me_private_message":
+                                onMePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
                                 break;
                             case "player_join":
                             case "player_leave":
                             case "player_switch_server":
                                 onPlayerStatusMessage(data.time,data.player,data.server,data.action);
                                 break;
+                            case "player_web_join":
+                            case "player_web_leave":
+                                onWebPlayerStatusMessage(data.time,data.player,data.action);
+                                break;
+                            case "server_message":
+                                onServerMessage(data.time,data.message,data.status);
+                                break;
+                            case "offline_message":
+                                onOfflineMessage(data.messages);
+                                break;
+                            case "game_player_list":
+                                $scope.$apply(function () {
+                                    $scope.player_list.game = data.player_list;
+                                });
+                                break;
+                            case "web_player_list":
+                                $scope.$apply(function () {
+                                    $scope.player_list.web = data.player_list;
+                                });
+                                break;
                         }
                     }
                     catch (e) {
-
+                        console.error(e)
                     }
                 };
-                ws.onclose = function(){
+                ws.onclose = function(e){
+                    if (e.code === 3000) {
+                        return;
+                    }
                     $scope.$apply(function () {
                         addMessage("WebSocket断开了连接，正在重新连接",msg_type_info);
                         self.start();
@@ -136,6 +174,22 @@
                 };
             }
         };
+
+        function onOfflineMessage(messages){
+            for (var i = 0; i < messages.length; i++) {
+                var data = messages[i];
+                if (typeof data === "object") {
+                    switch (data.action) {
+                        case "send_message":
+                            onOfflineBroadMessage(data.time,data.player,data.message,data.server,data.message_id);
+                            break;
+                        case "private_message":
+                            onOfflinePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
+                            break;
+                    }
+                }
+            }
+        }
 
         addMessage("正在连接服务器",msg_type_info);
         WsHelper.create();
@@ -160,7 +214,7 @@
             ws.send(JSON.stringify(obj));
         }
 
-        function sendMessage(message){
+        function sendMessage(message,status){
             message = message.replace(/&([0-9abcdef])([^&]*)/ig, (regex, color, msg) => {
                 return "§" + color + msg;
             });
@@ -209,13 +263,114 @@
                 }
             }
         }
-        
-        function onMessage(time,player,message,server){
-            message = "§e" + player + " §7> §f" + message;
+
+        function getAllMessage(player, message, server) {
+            message = "§e" + getClickPlayer(player) + " §7> §f" + message;
             if (typeof server === "string") {
                 message = "§b[" + server + "] " + message;
             }
 
+            message = formatMessage(message);
+            return message;
+        }
+
+        function onMessage(time,player,message,server,last_id){
+            message = getAllMessage(player,message,server);
+
+            $scope.$apply(function () {
+                addMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function onOfflineBroadMessage(time, player, message, server, last_id) {
+            message = getAllMessage(player,message,server);
+
+            $scope.$apply(function () {
+                insMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function getPrivateMessage(player, message, server) {
+            message = "§e" + getClickPlayer(player) + "§7悄悄的对你说: §f" + message;
+            if (typeof server === "string") {
+                message = "§b[" + server + "] " + message;
+            }
+
+            message = formatMessage(message);
+            return message;
+        }
+
+        function onPrivateMessage(time,player,message,server,last_id){
+            message = getPrivateMessage(player,message,server);
+
+            $scope.$apply(function () {
+                addMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function getMePrivateMessage(player, message, server) {
+            message = "§7你悄悄的对§e" + getClickPlayer(player) + "§7说: §f" + message;
+            if (typeof server === "string") {
+                message = "§b[" + server + "] " + message;
+            }
+
+            message = formatMessage(message);
+            return message;
+        }
+
+        function onMePrivateMessage(time,player,message,server,last_id){
+            message = getMePrivateMessage(player,message,server);
+
+            $scope.$apply(function () {
+                addMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function onOfflinePrivateMessage(time,player,message,server,last_id){
+            message = getPrivateMessage(player,message,server);
+
+            $scope.$apply(function () {
+                insMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function getClickPlayer(player) {
+            return "<span class='cursor-hand' title='点击向"+player+"发送私聊消息' ng-click='setMsgCmd(\""+player+"\")'>"+player+"</span>"
+        }
+
+        function onServerMessage(time,message,status){
+            message = formatMessage(message);
+
+            $scope.$apply(function () {
+
+                switch (status) {
+                    case 1001:
+                        $scope.offline.canload = false;
+                        insMessage(message,msg_type_server,time);
+                        break;
+                    default:
+                        addMessage(message,msg_type_server,time);
+                        break;
+                }
+            });
+        }
+
+        function formatMessage(message) {
             message = message.replace(/&([0-9abcdef])([^&]*)/ig, (regex, color, msg) => {
                 return "§" + color + msg;
             });
@@ -229,42 +384,59 @@
             });
 
             message = message.replace(/§([0-9abcdef])([^§]*)/ig, (regex, color, msg) => {
-                msg = msg.replace(/ /g, '&nbsp;');
+                //msg = msg.replace(/ /g, '&nbsp;');
                 return `<span class="color-${color}">${msg}</span>`;
             });
-
-            $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
-            });
+            return message;
         }
 
         function onPlayerStatusMessage(time,player,server,status){
-            var message = "§f玩家§e" + player + "§f";
+            var message = "";
             switch (status) {
                 case "player_join":
+                    message = "§6玩家§e" + getClickPlayer(player) + "§6";
                     message += "加入了游戏";
                     if (server.length > 0) {
                         message += "，所在服务器：§b" + server;
                     }
                     break;
                 case "player_leave":
+                    message = "§6玩家§e" + player + "§6";
                     message += "退出了游戏";
                     break;
                 case "player_switch_server":
+                    message = "§6玩家§e" + getClickPlayer(player) + "§6";
                     message += "加入了服务器：§b" + server;
                     break;
             }
-            message = message.replace(/§([0-9abcdef])([^§]*)/ig, (regex, color, msg) => {
-                msg = msg.replace(/ /g, '&nbsp;');
-                return `<span class="color-${color}">${msg}</span>`;
-            });
+            message = formatMessage(message);
             $scope.$apply(function () {
                 addMessage(message,msg_type_default,time);
             });
         }
 
+        function onWebPlayerStatusMessage(time,player,status){
+            var message = "";
+            switch (status) {
+                case "player_web_join":
+                    message = "§6玩家§e" + getClickPlayer(player) + "§6";
+                    message += "加入了YinwuChat";
+                    break;
+                case "player_web_leave":
+                    message = "§6玩家§e" + player + "§6";
+                    message += "离开了YinwuChat";
+                    break;
+            }
+            message = formatMessage(message);
+            $scope.$apply(function () {
+                addMessage(message,msg_type_default,time);
+            });
+        }
 
         $scope.onchat = function(){
+            if ($scope.chat.message.length === 0) {
+                return;
+            }
             $scope.historyMessage.push($scope.chat.message);
             if ($scope.historyMessage.length > 100) {
                 $scope.historyMessage.shift();
@@ -297,6 +469,44 @@
                 $scope.chat.message = $scope.historyMessage[$scope.historyMessageIndex];
             }
         };
+
+        $scope.offline = {
+            isloading : false,
+            canload : true,
+            last_id : 0
+        };
+        $scope.getOfflineMessage = function () {
+            $scope.offline.isloading = true;
+            var obj = {
+                action:"offline_message",
+                last_id:$scope.offline.last_id
+            };
+            ws.send(JSON.stringify(obj));
+            $timeout(function () {
+                $scope.offline.isloading = false;
+            },1000);
+        };
+
+        $scope.setMsgCmd = function (player) {
+            $scope.chat.message = "/yinwuchat msg " + player + "";
+        };
+
+        $scope.player_list = {
+            game:[],
+            web:[]
+        };
+        $scope.setting = {
+            show_time:true,
+            show_player_list:false
+        };
+        try {
+            if (angular.element(document).width() < 600) {
+                $scope.setting.show_time = false;
+            }
+        }
+        catch (e) {
+
+        }
     }
     app.directive('repeatHack', function($rootScope) {
         return {
@@ -313,11 +523,25 @@
                     })
                 }
                 if ((scope.$last || scope.$first) && $rootScope.__repeatHackIsBottom){
-                    var top = _document.height() - _window.height();
-                    _html.scrollTop(top);
-                    _body.scrollTop(top);
+                    setTimeout(function () {
+                        var top = _document.height() - _window.height();
+                        _html.scrollTop(top);
+                        _body.scrollTop(top);
+                    },100);
                 }
             }
         };
     });
+    app.directive('compile', ['$compile', function ($compile) {
+        return function(scope, element, attrs) {
+            scope.$watch(
+                function(scope) {
+                    return scope.$eval(attrs.compile);
+                },
+                function(value) {
+                    element.html(value);
+                    $compile(element.contents())(scope);
+                }
+            )};
+    }])
 })();
