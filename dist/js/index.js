@@ -179,12 +179,16 @@
             for (var i = 0; i < messages.length; i++) {
                 var data = messages[i];
                 if (typeof data === "object") {
+                    console.log(data)
                     switch (data.action) {
                         case "send_message":
                             onOfflineBroadMessage(data.time,data.player,data.message,data.server,data.message_id);
                             break;
                         case "private_message":
                             onOfflinePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
+                            break;
+                        case "me_private_message":
+                            onOfflineMePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
                             break;
                     }
                 }
@@ -344,6 +348,17 @@
             $scope.$apply(function () {
                 insMessage(message,msg_type_default,time);
                 if (typeof last_id !== "undefined" && last_id>0) {
+                    $scope.offline.last_id = last_id;
+                }
+            });
+        }
+
+        function onOfflineMePrivateMessage(time,player,message,server,last_id){
+            message = getMePrivateMessage(player,message,server);
+
+            $scope.$apply(function () {
+                insMessage(message,msg_type_default,time);
+                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
                     $scope.offline.last_id = last_id;
                 }
             });
