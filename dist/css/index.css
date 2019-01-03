@@ -79,10 +79,11 @@ body{
     height: 100%;
 }
 .yinwuchat-player-list .left{
-    background: rgba(0,0,0,0.4);
+    background: #000000;
+    opacity: 0.4;
 }
 .yinwuchat-player-list .right{
-    background: rgba(0,0,0,0.2);
+    background: #444444;
     color: white;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
