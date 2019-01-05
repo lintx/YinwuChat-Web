@@ -179,7 +179,7 @@
             for (var i = 0; i < messages.length; i++) {
                 var data = messages[i];
                 if (typeof data === "object") {
-                    console.log(data)
+                    //console.log(data)
                     switch (data.action) {
                         case "send_message":
                             onOfflineBroadMessage(data.time,data.player,data.message,data.server,data.message_id);
@@ -540,9 +540,13 @@
                 if ((scope.$last || scope.$first) && $rootScope.__repeatHackIsBottom){
                     setTimeout(function () {
                         var top = _document.height() - _window.height();
+                        //console.log(_document.height() , _window.height(),_document.height() - _window.height() - (_html.scrollTop() || _body.scrollTop()))
                         _html.scrollTop(top);
                         _body.scrollTop(top);
                     },100);
+                }
+                if (scope.$first) {
+                    //console.log(_document.height() , _window.height(),_document.height() - _window.height() - (_html.scrollTop() || _body.scrollTop()))
                 }
             }
         };
