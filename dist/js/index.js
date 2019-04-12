@@ -5,11 +5,7 @@
         return function (val) {
             return $sce.trustAsHtml(val);
         };
-    }]).filter('int2date',function () {
-        return function (val) {
-            return moment(val).format('YYYY-MM-DD HH:mm:ss');
-        }
-    });
+    }]);
     function lmcCtrl($scope,$timeout) {
         $scope.message = [];
         $scope.chat = {message:""};
@@ -18,7 +14,7 @@
         var islogin = false;
 
         var msg_type_err = 2,msg_type_info = 1,msg_type_default = 0,msg_type_server = 3;
-        function formatMessageHtmlObj(message, type, time) {
+        function formatMessageHtmlObj(message, type) {
             var obj = {message:message};
             switch (type) {
                 case 2:
@@ -34,14 +30,13 @@
                     obj.type = "message";
                     break;
             }
-            obj.time = typeof time === "undefined" ? new Date().getTime() : time;
             return obj;
         }
-        function addMessage(message, type, time) {
-            $scope.message.push(formatMessageHtmlObj(message,type,time));
+        function addMessage(message, type) {
+            $scope.message.push(formatMessageHtmlObj(message,type));
         }
-        function insMessage(message, type, time) {
-            $scope.message.splice(0,0,formatMessageHtmlObj(message,type,time));
+        function insMessage(message, type) {
+            $scope.message.splice(0,0,formatMessageHtmlObj(message,type));
         }
         function notWebSocket() {
             addMessage("看起来你的浏览器不支持WebSocket，YinwuChat的运行依赖于WebSocket，你需要一个支持WebSocket的浏览器，比如Chrome，才能正常使用。",msg_type_err);
@@ -118,28 +113,19 @@
                                 checkToken(data.status,data.isbind,data.message);
                                 break;
                             case "send_message":
-                                onMessage(data.time,data.player,data.message,data.server,data.message_id);
-                                break;
-                            case "private_message":
-                                onPrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
-                                break;
-                            case "me_private_message":
-                                onMePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
+                                onMessage(data.message);
                                 break;
                             case "player_join":
                             case "player_leave":
                             case "player_switch_server":
-                                onPlayerStatusMessage(data.time,data.player,data.server,data.action);
+                                onPlayerStatusMessage(data.player,data.server,data.action);
                                 break;
                             case "player_web_join":
                             case "player_web_leave":
-                                onWebPlayerStatusMessage(data.time,data.player,data.action);
+                                onWebPlayerStatusMessage(data.player,data.action);
                                 break;
                             case "server_message":
-                                onServerMessage(data.time,data.message,data.status);
-                                break;
-                            case "offline_message":
-                                onOfflineMessage(data.messages);
+                                onServerMessage(data.message,data.status);
                                 break;
                             case "game_player_list":
                                 $scope.$apply(function () {
@@ -158,13 +144,8 @@
                     }
                 };
                 ws.onclose = function(e){
-                    if (e.code === 3000) {
-                        return;
-                    }
                     $scope.$apply(function () {
-                        addMessage("WebSocket断开了连接，正在重新连接",msg_type_info);
-                        self.start();
-                        islogin = true;
+                        addMessage("WebSocket断开了连接",msg_type_info);
                     });
                 };
                 ws.onerror = function (err) {
@@ -174,26 +155,6 @@
                 };
             }
         };
-
-        function onOfflineMessage(messages){
-            for (var i = 0; i < messages.length; i++) {
-                var data = messages[i];
-                if (typeof data === "object") {
-                    //console.log(data)
-                    switch (data.action) {
-                        case "send_message":
-                            onOfflineBroadMessage(data.time,data.player,data.message,data.server,data.message_id);
-                            break;
-                        case "private_message":
-                            onOfflinePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
-                            break;
-                        case "me_private_message":
-                            onOfflineMePrivateMessage(data.time,data.player,data.message,data.server,data.message_id);
-                            break;
-                    }
-                }
-            }
-        }
 
         addMessage("正在连接服务器",msg_type_info);
         WsHelper.create();
@@ -240,7 +201,7 @@
 
         function addBindMsg(token) {
             $scope.$apply(function () {
-                addMessage("请进入游戏，并<span class='badge badge-warning'>在游戏内输入命令</span><span class='badge badge-light'>/yinwuchat bind " + token + " 备注</span>以绑定token，备注可以在使用<span class='badge badge-light'>/yinwuchat list</span>命令时查询到，当然，你也可以省略备注。",msg_type_info);
+                addMessage("请进入游戏，并<span class='badge badge-warning'>在游戏内输入命令</span><span class='badge badge-light'>/yinwuchat bind " + token + "</span>以绑定token。",msg_type_info);
             });
         }
         
@@ -268,99 +229,11 @@
             }
         }
 
-        function getAllMessage(player, message, server) {
-            message = "§e" + getClickPlayer(player) + " §7> §f" + message;
-            if (typeof server === "string") {
-                message = "§b[" + server + "] " + message;
-            }
-
+        function onMessage(message){
             message = formatMessage(message);
-            return message;
-        }
-
-        function onMessage(time,player,message,server,last_id){
-            message = getAllMessage(player,message,server);
 
             $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
-                    $scope.offline.last_id = last_id;
-                }
-            });
-        }
-
-        function onOfflineBroadMessage(time, player, message, server, last_id) {
-            message = getAllMessage(player,message,server);
-
-            $scope.$apply(function () {
-                insMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0) {
-                    $scope.offline.last_id = last_id;
-                }
-            });
-        }
-
-        function getPrivateMessage(player, message, server) {
-            message = "§e" + getClickPlayer(player) + "§7悄悄的对你说: §f" + message;
-            if (typeof server === "string") {
-                message = "§b[" + server + "] " + message;
-            }
-
-            message = formatMessage(message);
-            return message;
-        }
-
-        function onPrivateMessage(time,player,message,server,last_id){
-            message = getPrivateMessage(player,message,server);
-
-            $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
-                    $scope.offline.last_id = last_id;
-                }
-            });
-        }
-
-        function getMePrivateMessage(player, message, server) {
-            message = "§7你悄悄的对§e" + getClickPlayer(player) + "§7说: §f" + message;
-            if (typeof server === "string") {
-                message = "§b[" + server + "] " + message;
-            }
-
-            message = formatMessage(message);
-            return message;
-        }
-
-        function onMePrivateMessage(time,player,message,server,last_id){
-            message = getMePrivateMessage(player,message,server);
-
-            $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
-                    $scope.offline.last_id = last_id;
-                }
-            });
-        }
-
-        function onOfflinePrivateMessage(time,player,message,server,last_id){
-            message = getPrivateMessage(player,message,server);
-
-            $scope.$apply(function () {
-                insMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0) {
-                    $scope.offline.last_id = last_id;
-                }
-            });
-        }
-
-        function onOfflineMePrivateMessage(time,player,message,server,last_id){
-            message = getMePrivateMessage(player,message,server);
-
-            $scope.$apply(function () {
-                insMessage(message,msg_type_default,time);
-                if (typeof last_id !== "undefined" && last_id>0 && $scope.offline.last_id===0) {
-                    $scope.offline.last_id = last_id;
-                }
+                addMessage(message,msg_type_default);
             });
         }
 
@@ -368,7 +241,7 @@
             return "<span class='cursor-hand' title='点击向"+player+"发送私聊消息' ng-click='setMsgCmd(\""+player+"\")'>"+player+"</span>"
         }
 
-        function onServerMessage(time,message,status){
+        function onServerMessage(message,status){
             message = formatMessage(message);
 
             $scope.$apply(function () {
@@ -376,10 +249,10 @@
                 switch (status) {
                     case 1001:
                         $scope.offline.canload = false;
-                        insMessage(message,msg_type_server,time);
+                        insMessage(message,msg_type_server);
                         break;
                     default:
-                        addMessage(message,msg_type_server,time);
+                        addMessage(message,msg_type_server);
                         break;
                 }
             });
@@ -405,7 +278,7 @@
             return message;
         }
 
-        function onPlayerStatusMessage(time,player,server,status){
+        function onPlayerStatusMessage(player,server,status){
             var message = "";
             switch (status) {
                 case "player_join":
@@ -426,11 +299,11 @@
             }
             message = formatMessage(message);
             $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
+                addMessage(message,msg_type_default);
             });
         }
 
-        function onWebPlayerStatusMessage(time,player,status){
+        function onWebPlayerStatusMessage(player,status){
             var message = "";
             switch (status) {
                 case "player_web_join":
@@ -444,7 +317,7 @@
             }
             message = formatMessage(message);
             $scope.$apply(function () {
-                addMessage(message,msg_type_default,time);
+                addMessage(message,msg_type_default);
             });
         }
 
@@ -490,20 +363,9 @@
             canload : true,
             last_id : 0
         };
-        $scope.getOfflineMessage = function () {
-            $scope.offline.isloading = true;
-            var obj = {
-                action:"offline_message",
-                last_id:$scope.offline.last_id
-            };
-            ws.send(JSON.stringify(obj));
-            $timeout(function () {
-                $scope.offline.isloading = false;
-            },1000);
-        };
 
         $scope.setMsgCmd = function (player) {
-            $scope.chat.message = "/yinwuchat msg " + player + "";
+            $scope.chat.message = "/msg " + player + " ";
         };
 
         $scope.player_list = {

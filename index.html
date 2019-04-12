@@ -14,9 +14,6 @@
         <nav class="navbar navbar-light bg-light fixed-top border-bottom">
             <a class="navbar-brand" href="javascript:void(0)">YinwuChat</a>
             <div class="ml-2 ml-auto">
-                <button class="btn btn-outline-info" type="button" ng-click="setting.show_time = !setting.show_time">
-                    消息时间
-                </button>
                 <button class="btn btn-outline-info" type="button" ng-click="setting.show_player_list = !setting.show_player_list">
                     在线玩家
                 </button>
@@ -27,16 +24,12 @@
                 <div class="yinwuchat-defaultinfo">
                     <p>欢迎来到YinwuChat</p>
                     <p>在这里你可以接收到游戏内玩家的消息，绑定token后可以在这里向游戏内发送消息</p>
-                    <p>在聊天框输入<span class='badge badge-light'>/yinwuchat msg 玩家名 消息</span>向玩家发送私聊消息</p>
+                    <p>在聊天框输入<span class='badge badge-light'>/msg 玩家名 消息</span>向玩家发送私聊消息</p>
                     <p>YinwuChat-Web 0.0.2 Author:LinTx</p>
                     <p>---</p>
                 </div>
-                <div class="text-center">
-                    <button type="button" ng-disabled="offline.isloading || !offline.canload" class="btn btn-outline-secondary btn-sm" ng-click="getOfflineMessage()">{{offline.isloading?"正在加载...":"加载历史消息"}}</button>
-                </div>
                 <div class="yinwuchat-message">
                     <p ng-repeat="msg in message" repeat-hack>
-                        <span ng-if="setting.show_time" class="yinwuchat-message-time">{{msg.time|int2date}} </span>
                         <span ng-if="msg.type==='error'" class="text-danger"> [错误信息] </span>
                         <span ng-if="msg.type==='info'" class="text-info"> [提示信息] </span>
                         <span ng-if="msg.type==='server'" class="text-light"> [提示信息] </span>
@@ -79,7 +72,6 @@
 
 <script src="/node_modules/jquery/jquery.min.js"></script>
 <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-<script src="/node_modules/moment/moment.js"></script>
 <script src="/node_modules/angular/angular.min.js"></script>
 <script src="/dist/js/index.js"></script>
 </body>
